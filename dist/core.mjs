@@ -358,7 +358,15 @@ export function activityEntries(
         },
       );
     }
-    const fields = ["name", "project", "start", "end", "description"].filter(
+    const dateChanged = !same(old.start, task.start) || !same(old.end, task.end);
+    if (dateChanged)
+      add(task, "deadline_changed", {
+        fromStart: old.start || "",
+        fromEnd: old.end || "",
+        toStart: task.start || "",
+        toEnd: task.end || "",
+      });
+    const fields = ["name", "project", "description"].filter(
       (field) => !same(old[field], task[field]),
     );
     if (fields.length) add(task, "edited", { fields });
@@ -490,6 +498,27 @@ export function taskRange(task) {
 export function onDate(task, date) {
   const range = taskRange(task);
   return !!range && range.start <= date && range.end >= date;
+}
+export function overlappingTasks(tasks, task, start = task.start, end = task.end) {
+  const range = { start: start || end || "", end: end || start || "" };
+  if (!range.start || !range.end) return [];
+  const owners = new Set(assigneeNames(task));
+  return tasks
+    .filter((candidate) => {
+      if (candidate.id === task.id || candidate.status === "완료") return false;
+      const other = taskRange(candidate);
+      return other && other.start <= range.end && other.end >= range.start;
+    })
+    .map((candidate) => {
+      const other = taskRange(candidate);
+      return {
+        task: candidate,
+        sameOwners: assigneeNames(candidate).filter((name) => owners.has(name)),
+        overlapStart: other.start > range.start ? other.start : range.start,
+        overlapEnd: other.end < range.end ? other.end : range.end,
+      };
+    })
+    .sort((a, b) => a.overlapStart.localeCompare(b.overlapStart));
 }
 export function filterTasks(
   tasks,

@@ -21,6 +21,7 @@ import {
   layoutWeek,
   shiftTask,
   dayDifference,
+  overlappingTasks,
 } from "./core.mjs";
 
 const $ = (selector) => document.querySelector(selector);
@@ -567,6 +568,15 @@ function renderLinks() {
 }
 function activityText(entry) {
   if (entry.kind === "note") return entry.text || "";
+  if (entry.kind === "deadline_changed") {
+    const formatRange = (start, end) => {
+      if (start && end && start !== end)
+        return `${dateShort(start)}–${dateShort(end)}`;
+      return dateShort(end || start) || "날짜 미정";
+    };
+    const title = entry.fromStart === entry.toStart ? "마감일 변경" : "일정 변경";
+    return `${title} · ${formatRange(entry.fromStart, entry.fromEnd)} → ${formatRange(entry.toStart, entry.toEnd)}`;
+  }
   if (entry.kind === "member_status")
     return `개인 상태 · ${entry.from} → ${entry.to}`;
   if (entry.kind === "task_status")
@@ -711,9 +721,42 @@ function showDetail(id) {
   $("#detailEnd").value = task.end || "";
   $("#detailDescription").value = task.description || "";
   ownerChoices("#detailOwners", detailAssignees);
+  renderDeadlineImpact();
   $("#detailError").textContent = "";
   $("#detailDialog").showModal();
   $("#detailName").focus();
+}
+function renderDeadlineImpact() {
+  const preview = $("#deadlineImpact");
+  const task = state.tasks.find((item) => item.id === selectedTaskId);
+  if (!preview || !task) return;
+  const start = $("#detailStart").value,
+    end = $("#detailEnd").value,
+    overlaps = overlappingTasks(
+      [...state.tasks, ...EXHIBITION_MILESTONES],
+      { ...task, assignees: detailAssignees },
+      start,
+      end,
+    );
+  preview.hidden = false;
+  if (!start && !end) {
+    preview.innerHTML = `<div class="deadline-impact-head">${icon("calendar")}<span>날짜를 정하면 겹치는 일정이 표시돼요.</span></div>`;
+    return;
+  }
+  if (!overlaps.length) {
+    preview.innerHTML = `<div class="deadline-impact-head clear">${icon("check")}<span>이 기간에 겹치는 작업이 없어요.</span></div>`;
+    return;
+  }
+  preview.innerHTML = `<div class="deadline-impact-head">${icon("calendar")}<span>${overlaps.length}개 일정이 겹쳐요</span></div><ul>${overlaps
+    .map(({ task: other, sameOwners, overlapStart, overlapEnd }) => {
+      const when =
+        overlapStart === overlapEnd
+          ? dateShort(overlapStart)
+          : `${dateShort(overlapStart)}–${dateShort(overlapEnd)}`;
+      const people = assigneeNames(other);
+      return `<li><span class="impact-date">${esc(when)}</span><span class="impact-task">${esc(other.name)}</span>${projectChip(other.project)}<span class="impact-owners" title="${esc(people.join(", ") || "담당자 미정")}">${people.length ? people.map((name) => avatar(name)).join("") : avatar("")}${sameOwners.length ? `<small>담당자 겹침 · ${esc(sameOwners.join(", "))}</small>` : `<small>${esc(people.join(", ") || "담당자 미정")}</small>`}</span></li>`;
+    })
+    .join("")}</ul>`;
 }
 function closeDialog(id) {
   if (savingCount) return;
@@ -978,6 +1021,7 @@ document.addEventListener("click", (event) => {
       else detailAssignees[name] = "진행 중";
       detailDirty = true;
       ownerChoices("#detailOwners", detailAssignees);
+      renderDeadlineImpact();
       $(`#detailOwners [data-owner="${name}"]`).focus();
     }
   }
@@ -1086,6 +1130,8 @@ $("#worklogForm").addEventListener("submit", async (event) => {
 $("#createForm").addEventListener("input", () => (createDirty = true));
 $("#detailForm").addEventListener("input", () => (detailDirty = true));
 $("#detailForm").addEventListener("change", () => (detailDirty = true));
+$("#detailStart").addEventListener("input", renderDeadlineImpact);
+$("#detailEnd").addEventListener("input", renderDeadlineImpact);
 $("#taskRows").addEventListener("click", (event) => {
   if (event.target.closest("button,select,a,input")) return;
   const row = event.target.closest("[data-row]");
