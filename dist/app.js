@@ -512,7 +512,12 @@ async function activateCloudSession(adapter) {
 }
 async function initializeCloud() {
   const config = window.GRAD_DASH_CONFIG;
-  if (!config?.url || !config?.anonKey) return;
+  if (!config?.url || !config?.anonKey) {
+    $("#storageWarning").hidden = false;
+    $("#storageWarning").textContent =
+      "이 브라우저에만 저장돼요 · 팀 공유 DB 미연결";
+    return;
+  }
   setCloudGate();
   try {
     const cloud = await import("./cloud.mjs");

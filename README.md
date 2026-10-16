@@ -6,17 +6,17 @@
 
 배포 빌드는 esbuild가 Supabase 클라이언트를 포함해 `site/`에 묶고, 접속 설정은 빌드 때만 생성합니다. Supabase 설정이 없는 로컬 미리보기는 기존 브라우저 저장 방식으로 계속 동작합니다.
 
-1. Supabase에서 프로젝트를 만들고 `supabase/schema.sql`을 SQL Editor에서 실행합니다.
+1. Supabase에서 프로젝트를 만들고 `supabase/schema.sql`을 SQL Editor에서 실행합니다. DB 없이도 배포되지만, 각자 브라우저 저장 모드로 동작합니다.
 2. 실제 팀원 이메일 4개를 `public.team_members`에 이름과 함께 등록합니다. 이 목록에 있는 계정만 로그인할 수 있습니다.
 3. Supabase Authentication URL 설정에서 배포 주소와 로컬 주소 `http://localhost:4173`를 허용합니다. GitHub Pages 주소 예시는 `https://ysy6631y.github.io/graduation-exhibition-dashboard/`입니다.
 4. GitHub 저장소 Settings → Secrets and variables → Actions에 `SUPABASE_URL`, `SUPABASE_ANON_KEY`를 등록합니다. 브라우저 공개 키만 사용하며 `service_role` 키는 입력하지 않습니다.
-5. 저장소 Settings → Pages에서 배포 원본을 GitHub Actions로 설정합니다. 프로젝트 URL/키와 이메일 허용목록 설정을 끝낸 뒤 Actions에서 `Build and deploy dashboard`를 실행합니다. 비공개 저장소에서 Pages를 쓰려면 계정 요금제가 이를 지원해야 합니다.
+5. 저장소 Settings → Pages에서 배포 원본을 GitHub Actions로 설정합니다. `main`에 push하면 자동 배포되며, Actions에서 수동 실행도 할 수 있습니다. Supabase secret이 비어 있으면 사이트는 공개되지만 데이터는 브라우저별로 분리됩니다.
 
 첫 번째 팀 로그인 때 그 브라우저의 기존 작업을 공유 DB의 초기 데이터로 저장합니다. 이후 다른 팀원은 공유 DB 데이터를 읽고, 변경 내용은 Supabase Realtime으로 갱신됩니다. 서버의 revision 비교와 3방향 병합으로 서로 다른 항목의 동시 편집을 합치고, 같은 필드의 충돌은 저장을 거부합니다. RLS 정책은 팀 이메일 allowlist를 확인합니다.
 
-GitHub Pages는 저장소가 비공개여도 게시된 사이트 주소가 공개될 수 있으며, 비공개 저장소 Pages 제공 여부는 GitHub 요금제에 따라 다릅니다. 앱 데이터는 로그인과 DB 정책으로 보호되지만, 비공개 소스 저장소와 비공개 웹사이트는 서로 다른 설정입니다.
+공개 저장소와 GitHub Pages 사이트는 누구나 열 수 있습니다. Supabase를 연결하면 팀 이메일 로그인 및 DB 정책으로 작업 데이터를 보호할 수 있습니다. DB가 비어 있는 빌드는 앱 상단에 브라우저별 저장 안내를 표시합니다.
 
-배포 빌드는 DB 설정이 빠지면 실패합니다. 로컬 정적 빌드는 `npm run build`를 사용하고, 배포 빌드는 `npm run build:pages`를 사용합니다.
+`npm run build`는 Supabase 설정이 있으면 팀 공유 DB, 없으면 브라우저별 저장 모드로 결과물을 만듭니다. `npm run build:pages`는 DB 설정이 빠지면 실패합니다.
 
 ## 로컬 실행
 

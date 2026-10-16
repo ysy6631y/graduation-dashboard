@@ -1,6 +1,8 @@
 name: Build and deploy dashboard
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -22,7 +24,7 @@ jobs:
           node-version: 22
       - run: npm ci
       - uses: actions/configure-pages@v5
-      - run: npm run build:pages
+      - run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
