@@ -1,55 +1,24 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
-import { build } from "esbuild";
+import {build} from 'esbuild';
+import {mkdir, copyFile, writeFile, readFile} from 'node:fs/promises';
 
-const root = resolve(import.meta.dirname, "..");
-const output = resolve(root, "site");
-const url = process.env.SUPABASE_URL?.trim() || "";
-const anonKey = process.env.SUPABASE_ANON_KEY?.trim() || "";
-const requireCloud = process.argv.includes("--require-cloud");
-
-if (Boolean(url) !== Boolean(anonKey)) {
-  throw new Error("SUPABASE_URL과 SUPABASE_ANON_KEY를 함께 설정해주세요.");
+let project={};
+if(!process.argv.includes('--no-project-config')){
+  try{project=JSON.parse(await readFile(new URL('../public/cloud-config.json',import.meta.url),'utf8'))}catch(error){if(error.code!=='ENOENT')throw error}
 }
-if (requireCloud && (!url || !anonKey)) {
-  throw new Error(
-    "배포 빌드에는 SUPABASE_URL과 SUPABASE_ANON_KEY가 필요합니다.",
-  );
+const url=process.env.SUPABASE_URL?.trim()||project.url||'';
+const anonKey=process.env.SUPABASE_ANON_KEY?.trim()||project.anonKey||'';
+if(Boolean(url)!==Boolean(anonKey))throw Error('Supabase URL과 공개 키를 함께 설정해주세요.');
+if(process.argv.includes('--require-cloud')&&!url)throw Error('공유 저장소 설정 없이 배포할 수 없습니다.');
+if(url&&!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(url))throw Error('Supabase URL이 올바르지 않습니다.');
+if(anonKey){
+  let role='';
+  try{role=JSON.parse(Buffer.from(anonKey.split('.')[1],'base64url').toString()).role}catch{}
+  if(anonKey.startsWith('sb_secret_')||role==='service_role')throw Error('서버 전용 비밀 키는 배포할 수 없습니다. 공개 키를 사용하세요.');
+  if(!anonKey.startsWith('sb_publishable_')&&role!=='anon')throw Error('Supabase 공개 publishable/anon 키를 확인해주세요.');
 }
-if (url && !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(url)) {
-  throw new Error("SUPABASE_URL 형식을 확인해주세요.");
-}
-
-await rm(output, { recursive: true, force: true });
-await mkdir(output, { recursive: true });
-for (const name of ["index.html", "styles.css"]) {
-  await cp(resolve(root, "dist", name), resolve(output, name));
-}
-await build({
-  entryPoints: [resolve(root, "dist", "app.js")],
-  bundle: true,
-  splitting: true,
-  format: "esm",
-  platform: "browser",
-  target: ["es2022"],
-  outdir: output,
-  entryNames: "app",
-  chunkNames: "chunks/[name]-[hash]",
-});
-const htmlPath = resolve(output, "index.html");
-const html = await readFile(htmlPath, "utf8");
-if (!html.includes('src="./runtime-config.js"')) {
-  await writeFile(
-    htmlPath,
-    html.replace(
-      '<script type="module" src="./app.js"></script>',
-      '<script src="./runtime-config.js"></script>\n    <script type="module" src="./app.js"></script>',
-    ),
-  );
-}
-await writeFile(
-  resolve(output, "runtime-config.js"),
-  `window.GRAD_DASH_CONFIG=Object.freeze(${JSON.stringify({ url, anonKey })});\n`,
-);
-await writeFile(resolve(output, ".nojekyll"), "");
-console.log(`Built ${output}${url ? " with shared database configuration" : " (local-only mode)"}`);
+await mkdir('site',{recursive:true});
+for(const file of ['index.html','style.css','reference.css','workspace.css','theme.css'])await copyFile('public/'+file,'site/'+file);
+await build({entryPoints:['public/app.js'],outdir:'site',bundle:true,format:'esm',platform:'browser',target:'es2022',splitting:true,minify:true,chunkNames:'chunks/[name]-[hash]'});
+await writeFile('site/runtime-config.js','window.WORKSPACE_CONFIG=Object.freeze('+JSON.stringify({url,anonKey})+');\n');
+await writeFile('site/.nojekyll','');
+console.log('정적 빌드 완료 · '+(url?'Supabase 연결 설정 포함':'로컬 확인용 · 배포 금지'));

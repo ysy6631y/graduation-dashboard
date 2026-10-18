@@ -1,0 +1,5 @@
+# Only declared properties are pushed; other remote settings stay unchanged.
+project_id = "graduation-dashboard"
+
+[auth]
+enable_anonymous_sign_ins = true
