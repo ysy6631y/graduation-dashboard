@@ -26,6 +26,8 @@ async function go(page, view) {
 }
 async function openPage(view = '홈', viewport = {width: 1366, height: 768}) {
   const page = await browser.newPage({viewport}); page.setDefaultTimeout(10000);
+  // Functional tests must not depend on the external font CDN being available.
+  await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//,route=>route.abort());
   await page.clock.install({time: new Date('2026-10-19T03:00:00Z')});
   await page.goto(base); await page.locator('.team-profiles').waitFor();
   if (view !== '홈') await go(page, view);
@@ -316,9 +318,21 @@ test('example UI is removed and old samples stay hidden; responsive menus and fo
     await page.setViewportSize(viewport);
     await page.getByRole('button',{name:'메뉴 열기',exact:true}).click();
     assert.equal(await page.locator('main').evaluate(el=>el.inert),true);
-    await page.keyboard.press('Shift+Tab');assert.equal(await page.locator('.drawer [data-view="자료실"]').evaluate(el=>el===document.activeElement),true);
+    const lastMenuButton=viewport.width<=600?'#mobileSettings':'.drawer [data-view="자료실"]';
+    await page.keyboard.press('Shift+Tab');assert.equal(await page.locator(lastMenuButton).evaluate(el=>el===document.activeElement),true);
     await page.keyboard.press('Tab');assert.equal(await page.locator('#closeMenu').evaluate(el=>el===document.activeElement),true);
     await page.keyboard.press('Escape');assert.equal(await page.locator('main').evaluate(el=>el.inert),false);
+    if(viewport.width<=600){
+      assert.equal(await page.locator('#settings').isVisible(),false);
+      await page.getByRole('button',{name:'메뉴 열기',exact:true}).click();
+      const settings=page.locator('#mobileSettings');
+      assert.equal(await settings.innerText(),'');
+      assert.ok((await settings.boundingBox()).height>=44);
+      await settings.click();await page.locator('dialog[open]').waitFor();
+      assert.equal(await page.locator('.drawer').count(),0);
+      await page.getByRole('button',{name:'닫기',exact:true}).click();
+      assert.equal(await page.locator('#menu').evaluate(el=>el===document.activeElement),true);
+    }else assert.equal(await page.locator('#settings').isVisible(),true);
     for (const view of ['작업 현황', '전체 일정', '자료실', '홈']) {
       await go(page, view); assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       assert.equal(await page.locator('#demo, .sample-badge').count(),0);
@@ -560,5 +574,23 @@ test('project filters combine with completion and person; adding defaults to sel
     await page.getByRole('button',{name:'리비두비',exact:true}).click();
     assert.equal(await page.locator('[data-project-filter="리비두비"]').getAttribute('aria-pressed'),'true');
   }
+  await page.close();
+});
+
+test('mobile drawer settings exports a readable backup without changing workspace data',async()=>{
+  await reset({tasks:[task('백업 확인 작업')]});
+  const page=await openPage('홈',{width:390,height:844});
+  const before=await workspace();
+  await page.getByRole('button',{name:'메뉴 열기',exact:true}).click();
+  await page.getByRole('button',{name:'작업실 설정',exact:true}).click();
+  const downloaded=page.waitForEvent('download');
+  await page.getByRole('button',{name:'백업 내려받기',exact:true}).click();
+  const download=await downloaded;
+  assert.match(download.suggestedFilename(),/^졸업전시-백업-.*\.json$/);
+  const backup=JSON.parse(await readFile(await download.path(),'utf8'));
+  assert.deepEqual(backup.tasks,before.tasks);
+  assert.deepEqual(backup.events,before.events);
+  assert.deepEqual(backup.links,before.links);
+  assert.deepEqual(await workspace(),before);
   await page.close();
 });

@@ -267,9 +267,11 @@ h1, .titlebar h1 { font-size: 26px; }
   .task-dialog .form-grid .wide, .event-dialog .form-grid .wide { grid-column: 1 / -1; }
 }
 
-/* Keep mobile settings in the header, clear of the page title. */
+/* On mobile, settings live in the navigation drawer. */
+.mobile-settings { display: none; }
 @media (max-width: 600px) {
-  .shell-rail { flex-direction: row; gap: 4px; }
-  .shell-rail .rail-bottom { margin-top: 0; width: 28px; height: 28px; padding: 5px; }
-  #app > header { padding-left: 96px; }
+  .shell-rail .rail-bottom { display: none; }
+  .drawer { display: flex; flex-direction: column; }
+  .drawer .mobile-settings { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; margin-top: auto; padding: 12px; border-radius: 12px; background: transparent; color: #56636a; }
+  .mobile-settings svg { width: 20px; height: 20px; }
 }
