@@ -266,3 +266,10 @@ h1, .titlebar h1 { font-size: 26px; }
   .task-dialog .form-grid, .event-dialog .form-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .task-dialog .form-grid .wide, .event-dialog .form-grid .wide { grid-column: 1 / -1; }
 }
+
+/* Keep mobile settings in the header, clear of the page title. */
+@media (max-width: 600px) {
+  .shell-rail { flex-direction: row; gap: 4px; }
+  .shell-rail .rail-bottom { margin-top: 0; width: 28px; height: 28px; padding: 5px; }
+  #app > header { padding-left: 96px; }
+}
