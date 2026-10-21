@@ -51,7 +51,7 @@ async function readBody(request,response){
   let body='';for await(const chunk of request){body+=chunk;if(Buffer.byteLength(body)>1_000_000){send(response,413,{error:'한 번에 저장할 수 있는 양을 초과했어요.'});return null}}
   try{return JSON.parse(body)}catch{send(response,400,{error:'요청 내용을 확인해주세요.'});return null}
 }
-const files={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/reference.css':'reference.css','/workspace.css':'workspace.css','/theme.css':'theme.css','/client.mjs':'client.mjs','/workspace-core.mjs':'workspace-core.mjs'};
+const files={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/reference.css':'reference.css','/workspace.css':'workspace.css','/theme.css':'theme.css','/client.mjs':'client.mjs','/workspace-core.mjs':'workspace-core.mjs','/usagi-loading.gif':'usagi-loading.gif'};
 const server=http.createServer(async(request,response)=>{
   try{
     if(!['127.0.0.1:'+port,'localhost:'+port].includes(request.headers.host))return send(response,403,{error:'로컬 주소로 접속해주세요.'});
@@ -82,7 +82,7 @@ const server=http.createServer(async(request,response)=>{
       if(!files[path])return send(response,404,{error:'찾을 수 없어요.'});
       content=await readFile(root+'public/'+files[path]);
     }
-    response.writeHead(200,{...security,'Content-Type':/\.(m?js)$/.test(path)?'text/javascript':path.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-store'});
+    response.writeHead(200,{...security,'Content-Type':/\.(m?js)$/.test(path)?'text/javascript':path.endsWith('.css')?'text/css':path.endsWith('.gif')?'image/gif':'text/html','Cache-Control':'no-store'});
     response.end(request.method==='HEAD'?undefined:content);
   }catch(error){
     console.error(error.code||error.message);

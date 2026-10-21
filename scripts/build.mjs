@@ -17,7 +17,7 @@ if(anonKey){
   if(!anonKey.startsWith('sb_publishable_')&&role!=='anon')throw Error('Supabase 공개 publishable/anon 키를 확인해주세요.');
 }
 await mkdir('site',{recursive:true});
-for(const file of ['index.html','style.css','reference.css','workspace.css','theme.css'])await copyFile('public/'+file,'site/'+file);
+for(const file of ['index.html','style.css','reference.css','workspace.css','theme.css','usagi-loading.gif'])await copyFile('public/'+file,'site/'+file);
 await build({entryPoints:['public/app.js'],outdir:'site',bundle:true,format:'esm',platform:'browser',target:'es2022',splitting:true,minify:true,chunkNames:'chunks/[name]-[hash]'});
 await writeFile('site/runtime-config.js','window.WORKSPACE_CONFIG=Object.freeze('+JSON.stringify({url,anonKey})+');\n');
 await writeFile('site/.nojekyll','');

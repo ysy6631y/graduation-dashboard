@@ -51,6 +51,17 @@ async function add(page, data, selector = '[data-add]') {
   await finish(page);
 }
 
+test('initial loading state shows the animated mascot centered until workspace data arrives',async()=>{
+  await reset();const page=await browser.newPage({viewport:{width:1366,height:768}});let release;
+  const gate=new Promise(resolve=>{release=resolve});
+  await page.route(base+'/api/workspace',async route=>{await gate;await route.continue()});
+  const navigation=page.goto(base);const image=page.locator('.initial-loader img');await image.waitFor();await image.evaluate(element=>element.decode());
+  const box=await image.boundingBox();
+  assert.ok(box.width>=128&&box.width<=168);assert.ok(Math.abs(box.x+box.width/2-683)<3);assert.ok(Math.abs(box.y+box.height/2-384)<3);
+  assert.equal(await image.evaluate(element=>element.naturalWidth),258);
+  release();await navigation;await page.locator('.team-profiles').waitFor();assert.equal(await page.locator('.initial-loader').count(),0);await page.close();
+});
+
 test('event ranges cover every included day; same-day defaults and reversed dates validate', async () => {
   await reset(); const page=await openPage('전체 일정');
   await page.getByRole('button',{name:'＋ 일정 등록',exact:true}).click();
