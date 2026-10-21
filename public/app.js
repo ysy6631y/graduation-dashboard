@@ -12,7 +12,7 @@ function icon(name){return `<svg viewBox="0 0 24 24" width="18" height="18" fill
 function avatar(name){const index=team.indexOf(name);return `<span class="avatar avatar-${index<0?'other':index}" title="${esc(name)}" aria-hidden="true">${esc(name.slice(-2))}</span>`}
 function assigneeProfiles(names){return names.length?`<span class="avatar-stack" role="img" aria-label="담당자: ${esc(names.join(', '))}" title="${esc(names.join(' · '))}">${names.slice(0,4).map(avatar).join('')}</span>`:'<span class="unassigned">미정</span>'}
 function profile(name){modal(`${name} 프로필`,`<div class="profile-detail">${avatar(name)}<div><strong>${name}</strong><p>졸업전시 팀</p></div></div>`,'담당 작업 보기',async()=>{activeMember=name;person=name;taskProject='';filter='미완료';view='작업 현황';try{localStorage.setItem('workspace-profile',name)}catch{}$('#dialog').close();render()})}
-const id=()=>crypto.randomUUID(),today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Seoul'}),validURL=s=>Boolean(s)&&safeURL(s),date=d=>d?`${Number(d.slice(5,7))}.${Number(d.slice(8,10))}`:'마감일 없음';
+const id=()=>crypto.randomUUID(),today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Seoul'}),validURL=s=>Boolean(s)&&safeURL(s),date=d=>d?`${Number(d.slice(5,7))}.${Number(d.slice(8,10))}`:'';
 const eventStart=e=>e.startDate||e.date;
 const eventEnd=e=>e.endDate||e.date;
 const eventDate=e=>e.kind==='review'?eventStart(e):eventEnd(e);

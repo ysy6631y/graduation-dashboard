@@ -208,7 +208,7 @@ test('required fields, unassigned work, duplicate notice and optional link are u
   const saved = (await workspace()).tasks.find(t => t.project === '룸');
   assert.deepEqual(saved.assignees, []); assert.equal(saved.link, '');assert.equal(saved.due, '');
   assert.ok(await page.locator('.room .unassigned').isVisible());
-  assert.equal(await page.locator('.room').getByRole('button',{name:'같은 작업',exact:true}).locator('..').locator('.task-date').textContent(),'마감일 없음');await page.close();
+  assert.equal(await page.locator('.room').getByRole('button',{name:'같은 작업',exact:true}).locator('..').locator('.task-date').textContent(),'');await page.close();
 });
 
 test('home and all tasks prioritize unfinished dated, unfinished undated, then completed work',async()=>{
