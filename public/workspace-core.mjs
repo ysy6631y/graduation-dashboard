@@ -91,7 +91,7 @@ export function validWorkspace(input) {
     Array.isArray(task.assignees) && task.assignees.length <= 20 && task.assignees.every(name => typeof name === 'string' && name.trim() && name.length <= 100) &&
     typeof task.done === 'boolean' && (task.completedOn == null || validDate(task.completedOn)) &&
     (task.link === undefined || typeof task.link === 'string') && (task.link || '').length <= 4000 && safeURL(task.link || '') &&
-    (task.dueMode === 'custom' ? validDate(task.due) : input.events.some(event => event.id === task.dueMode)));
+    (task.dueMode === 'custom' ? task.due === '' || validDate(task.due) : input.events.some(event => event.id === task.dueMode)));
 }
 
 export async function persistWorkspace(adapter, before, proposed, {attempts = 8} = {}) {

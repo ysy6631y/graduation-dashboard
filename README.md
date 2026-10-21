@@ -48,6 +48,7 @@ GitHub Pages는 `npm run build:pages`로 정적 화면을 배포합니다. Actio
 
 1. `supabase/migrations/202610190001_workspace_hardening.sql`
 2. `supabase/migrations/202610190002_invite_access.sql`
+3. `supabase/migrations/202610210001_optional_task_deadline.sql`
 
 `supabase/config.toml`은 익명 로그인 활성화만 선언합니다. `supabase config diff`로 검토한 뒤 `config push`하면 선언하지 않은 서비스 설정은 유지합니다.
 

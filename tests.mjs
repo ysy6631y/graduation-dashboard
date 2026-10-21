@@ -201,15 +201,22 @@ test('required fields, unassigned work, duplicate notice and optional link are u
   assert.equal(await page.locator('[name=title]').evaluate(el => el.validity.valueMissing), true);
   await page.locator('[name=title]').fill('같은 작업'); await page.locator('[name=project]').selectOption('리비두비');
   assert.ok(await page.locator('#taskDuplicate').isVisible());
-  await page.getByRole('button', {name: '추가하기', exact: true}).click();
-  assert.equal(await page.locator('[name=due]').evaluate(el => el.validity.valueMissing), true);
-  assert.equal((await workspace()).tasks.length, 1);
   await page.locator('[name=project]').selectOption('룸'); assert.equal(await page.locator('#taskDuplicate').isVisible(), false);
-  await page.locator('[name=due]').fill('2026-10-22'); assert.equal(await page.locator('.task-options').getAttribute('open'), null);
+  assert.equal(await page.locator('[name=due]').evaluate(el => el.required), false);
+  assert.equal(await page.locator('.task-options').getAttribute('open'), null);
   await finish(page);
   const saved = (await workspace()).tasks.find(t => t.project === '룸');
-  assert.deepEqual(saved.assignees, []); assert.equal(saved.link, '');
-  assert.ok(await page.locator('.room .unassigned').isVisible()); await page.close();
+  assert.deepEqual(saved.assignees, []); assert.equal(saved.link, '');assert.equal(saved.due, '');
+  assert.ok(await page.locator('.room .unassigned').isVisible());
+  assert.equal(await page.locator('.room').getByRole('button',{name:'같은 작업',exact:true}).locator('..').locator('.task-date').textContent(),'마감일 없음');await page.close();
+});
+
+test('home and all tasks prioritize unfinished dated, unfinished undated, then completed work',async()=>{
+  const dated=task('날짜 있는 미완료',{due:'2026-10-20'}),undated=task('날짜 없는 미완료',{due:''}),done=task('완료된 작업',{due:'2026-10-18',done:true,completedOn:'2026-10-19'});
+  await reset({tasks:[done,undated,dated]});const page=await openPage();
+  assert.deepEqual(await page.locator('.project').first().locator('.task-name').allTextContents(),['날짜 있는 미완료','날짜 없는 미완료','완료된 작업']);
+  await page.getByRole('button',{name:'전체 작업 ›',exact:true}).click();
+  assert.deepEqual(await page.locator('.full-list .task-name').allTextContents(),['날짜 있는 미완료','날짜 없는 미완료','완료된 작업']);await page.close();
 });
 
 test('many tasks stay compact and later added work is shown in task status', async () => {

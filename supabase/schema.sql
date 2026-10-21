@@ -1,5 +1,6 @@
 -- Current schema is versioned in migrations, not in this compatibility file.
--- Apply both files in order:
+-- Apply all files in order:
 --   migrations/202610190001_workspace_hardening.sql
 --   migrations/202610190002_invite_access.sql
+--   migrations/202610210001_optional_task_deadline.sql
 -- Do not restore the old email-only schema: it bypasses current invite memberships.

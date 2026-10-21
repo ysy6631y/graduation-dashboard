@@ -24,6 +24,7 @@ test('home review cycles hide only prior completed work; current, reopened and u
 });
 test('strict input validation blocks malformed dates, script URLs, duplicate IDs and invalid demo flags',()=>{
   assert.equal(validWorkspace(initial()),true);
+  const undated=initial();undated.tasks[0].due='';assert.equal(validWorkspace(undated),true);
   for(const value of ['2026-02-30','2026-13-01','2026-1-01',null])assert.equal(validDate(value),false);
   for(const value of ['javascript:alert(1)','https://user:password@example.com','not a link'])assert.equal(safeURL(value),false);
   for(const patch of [{demo:'false'},{deletedAt:'bad'},{link:17},{link:'x'.repeat(4001)},{due:'2026-02-30'}]){

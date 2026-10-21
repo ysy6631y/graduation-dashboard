@@ -62,6 +62,11 @@ test('Postgres migration: allowlisted identity, RLS, CAS, payload validation and
     assert.equal((await db.query('select public.save_workspace_state(0,$1) ok',[payload])).rows[0].ok,false);
     assert.equal((await db.query('select revision from public.workspace_state')).rows[0].revision,1);
     assert.equal((await db.query('select count(*)::int n from public.workspace_backups')).rows[0].n,1);
+    await db.exec('reset role;');
+    await db.exec(await readFile('supabase/migrations/202610210001_optional_task_deadline.sql','utf8'));
+    await db.exec(`set role authenticated; set request.jwt.claim.sub='00000000-0000-4000-8000-000000000001'; set request.jwt.claim.email='team@example.com';`);
+    const undated=structuredClone(payload);undated.tasks[0].due='';
+    assert.equal((await db.query('select public.workspace_payload_valid($1) ok',[undated])).rows[0].ok,true);
     for(const patch of [{due:'2026-02-30'},{link:'javascript:alert(1)'},{demo:'no'},{done:'true'},{completedOn:'2026-02-30'}]){
       const invalid=structuredClone(payload);Object.assign(invalid.tasks[0],patch);
       await assert.rejects(db.query('select public.save_workspace_state(1,$1)',[invalid]),/Invalid workspace payload/);

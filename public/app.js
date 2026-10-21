@@ -12,14 +12,15 @@ function icon(name){return `<svg viewBox="0 0 24 24" width="18" height="18" fill
 function avatar(name){const index=team.indexOf(name);return `<span class="avatar avatar-${index<0?'other':index}" title="${esc(name)}" aria-hidden="true">${esc(name.slice(-2))}</span>`}
 function assigneeProfiles(names){return names.length?`<span class="avatar-stack" role="img" aria-label="담당자: ${esc(names.join(', '))}" title="${esc(names.join(' · '))}">${names.slice(0,4).map(avatar).join('')}</span>`:'<span class="unassigned">미정</span>'}
 function profile(name){modal(`${name} 프로필`,`<div class="profile-detail">${avatar(name)}<div><strong>${name}</strong><p>졸업전시 팀</p></div></div>`,'담당 작업 보기',async()=>{activeMember=name;person=name;taskProject='';filter='미완료';view='작업 현황';try{localStorage.setItem('workspace-profile',name)}catch{}$('#dialog').close();render()})}
-const id=()=>crypto.randomUUID(),today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Seoul'}),validURL=s=>Boolean(s)&&safeURL(s),date=d=>d?`${Number(d.slice(5,7))}.${Number(d.slice(8,10))}`:'날짜 확인 필요';
+const id=()=>crypto.randomUUID(),today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Seoul'}),validURL=s=>Boolean(s)&&safeURL(s),date=d=>d?`${Number(d.slice(5,7))}.${Number(d.slice(8,10))}`:'마감일 없음';
 const eventStart=e=>e.startDate||e.date;
 const eventEnd=e=>e.endDate||e.date;
 const eventDate=e=>e.kind==='review'?eventStart(e):eventEnd(e);
 const includesDate=(e,d)=>eventStart(e)<=d&&d<=eventEnd(e);
 function eventRange(e){const start=eventStart(e),end=eventEnd(e),showYear=start.slice(0,4)!==end.slice(0,4)||start.slice(0,4)!==today().slice(0,4);const label=d=>(showYear?d.slice(0,4)+'.':'')+date(d);return start===end?label(start):`${label(start)} – ${label(end)}`}
 const due=t=>t.dueMode==='custom'?t.due:(()=>{const e=state.events.find(e=>e.id===t.dueMode);return e?eventDate(e):''})();
-const sorted=arr=>[...arr].sort((a,b)=>(due(a)||'9999').localeCompare(due(b)||'9999')||a.title.localeCompare(b.title));
+// Actionable work comes first: unfinished dated, unfinished undated, then completed.
+const sorted=arr=>[...arr].sort((a,b)=>Number(a.done)-Number(b.done)||Number(!due(a))-Number(!due(b))||(due(a)||'').localeCompare(due(b)||'')||a.title.localeCompare(b.title));
 function nextReview(project){return visibleEvents().filter(e=>e.kind==='review'&&eventEnd(e)>=today()&&(!project||!e.project||e.project===project)).sort((a,b)=>eventDate(a).localeCompare(eventDate(b)))[0]}
 const days=d=>Math.round((Date.parse(d+'T00:00:00+09:00')-Date.parse(today()+'T00:00:00+09:00'))/86400000);
 const dday=d=>!d?'미정':days(d)===0?'D-day':days(d)>0?'D−'+days(d):'D+'+Math.abs(days(d));
@@ -46,7 +47,7 @@ function update(mutator,base=null) {
     lastConflict=null;
     try {
       const before=structuredClone(base||state),next=structuredClone(before);mutator(next);
-      if(!validWorkspace(next))throw Error('작업명, 마감일, 일정 기간 또는 링크를 확인해주세요.');
+      if(!validWorkspace(next))throw Error('작업명, 일정 기간 또는 링크를 확인해주세요.');
       state=await client.save(before,next);lastWriteError=false;render();return true;
     }catch(error){
       if(error instanceof WorkspaceConflict){state=error.latest;lastConflict=error;render()}
@@ -88,7 +89,7 @@ function fields(t={}) {
   return `<div class="form-grid">
     <label class="wide">작업명<input name="title" required maxlength="300" placeholder="어떤 작업을 하나요?" value="${esc(t.title)}"></label>
     <label>프로젝트<select name="project" required><option value="">프로젝트 선택</option>${options(t.project,false)}</select></label>
-    <label>마감일<input type="date" name="due" required value="${esc(t.id?due(t):'')}"></label>
+    <label>마감일 <span class="optional">선택</span><input type="date" name="due" value="${esc(t.id?due(t):'')}"></label>
     <fieldset class="member-picker wide"><legend>담당자 <span>여러 명 선택 가능</span></legend>
       <div class="member-options">${members.map(name=>`<button type="button" class="member-option" data-member="${esc(name)}" aria-pressed="${t.assignees?.includes(name)||false}">${avatar(name)}<span>${esc(name)}</span></button>`).join('')}</div>
       <input type="hidden" name="assignees" value="${esc(t.assignees?.join(', '))}">
@@ -107,7 +108,6 @@ function readTask(f,old={}) {
     dueMode:keepLink?linkedEvent.id:'custom',due:deadline,
     link:String(f.get('link')||'').trim(),done:old.done||false};
   if(!t.title||!t.project)throw Error('작업명과 프로젝트를 확인해주세요.');
-  if(!t.due)throw Error('마감일을 선택해주세요.');
   if(t.link&&!validURL(t.link))throw Error('http 또는 https 링크를 입력해주세요.');
   return t;
 }

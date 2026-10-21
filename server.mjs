@@ -63,7 +63,7 @@ const server=http.createServer(async(request,response)=>{
       queue=queue.catch(()=>{}).then(async()=>{
         if(!Number.isSafeInteger(input.revision)||input.revision<0)return send(response,400,{error:'저장 버전을 확인해주세요.'});
         if(input.revision!==state.revision)return send(response,409,{error:'다른 창에서 변경했어요.',state});
-        if(!validWorkspace(input))return send(response,400,{error:'작업명, 마감일, 일정 기간 또는 링크를 확인해주세요.'});
+        if(!validWorkspace(input))return send(response,400,{error:'작업명, 일정 기간 또는 링크를 확인해주세요.'});
         const next={...input,revision:state.revision+1};
         await backup(state);await atomicWrite(dir+'/workspace.json',JSON.stringify(next,null,2));state=next;
         send(response,200,state);pruneBackups().catch(()=>{});
