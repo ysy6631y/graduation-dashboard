@@ -1,3 +1,4 @@
+import {emptyBudget, validBudget} from './budget-core.mjs';
 export function equal(a, b) {
   if (Object.is(a, b)) return true;
   if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
@@ -46,7 +47,7 @@ function mergeRecords(before, proposed, latest, latestState) {
 }
 
 export function mergeWorkspace(before, proposed, latest) {
-  const metadata = item => Object.fromEntries(Object.entries(item).filter(([key]) => !['tasks', 'events', 'links', 'revision'].includes(key)));
+  const metadata = item => Object.fromEntries(Object.entries(item).filter(([key]) => !['tasks', 'events', 'links', 'revision', 'budget'].includes(key)));
   const conflict = () => { throw new WorkspaceConflict(latest); };
   return {
     ...mergeFields(metadata(before), metadata(proposed), metadata(latest), conflict),
@@ -54,6 +55,12 @@ export function mergeWorkspace(before, proposed, latest) {
     tasks: mergeRecords(before.tasks, proposed.tasks, latest.tasks, latest),
     events: mergeRecords(before.events, proposed.events, latest.events, latest),
     links: mergeFields(before.links, proposed.links, latest.links, conflict),
+    ...(before.budget || proposed.budget || latest.budget ? {budget: {
+      version: 1,
+      ...Object.fromEntries(['settings','items','quotes'].map(key => [key, mergeRecords(
+        (before.budget || emptyBudget())[key], (proposed.budget || before.budget || emptyBudget())[key], (latest.budget || emptyBudget())[key], latest
+      )])),
+    }} : {}),
   };
 }
 
@@ -77,6 +84,7 @@ export const safeURL = value => {
 };
 
 export function validWorkspace(input) {
+  if (input && !validBudget(input.budget, safeURL)) return false;
   if (!input || !Array.isArray(input.tasks) || !Array.isArray(input.events) || !input.links || typeof input.links !== 'object' || Array.isArray(input.links)) return false;
   if (input.tasks.length > 5000 || input.events.length > 1000 || Object.keys(input.links).length > 100) return false;
   if (!Object.values(input.links).every(value => typeof value === 'string' && value.length <= 4000 && safeURL(value))) return false;

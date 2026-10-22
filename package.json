@@ -7,12 +7,15 @@
     "start": "node server.mjs",
     "build": "node scripts/build.mjs",
     "build:pages": "node scripts/build.mjs --require-cloud",
-    "test": "node --test core.test.mjs database.test.mjs tests.mjs",
+    "test": "node --test --test-concurrency=1 core.test.mjs database.test.mjs budget.test.mjs tests.mjs budget.browser.test.mjs",
     "test:unit": "node --test core.test.mjs database.test.mjs",
     "test:browser": "node --test tests.mjs",
-    "test:legacy-ai": "node --test ai.test.mjs"
+    "test:legacy-ai": "node --test ai.test.mjs",
+    "test:budget": "node --test --test-concurrency=1 budget.test.mjs budget.browser.test.mjs"
   },
-  "dependencies": {"@supabase/supabase-js": "2.118.0"},
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0"
+  },
   "devDependencies": {
     "@playwright/test": "1.56.0",
     "@electric-sql/pglite": "0.5.10",
