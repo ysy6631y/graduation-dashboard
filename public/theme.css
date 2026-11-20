@@ -228,17 +228,18 @@ h1, .titlebar h1 { font-size: 26px; }
 .conflict-notice p { font-size: 12px; color: #92734c; }
 #toast { gap: 16px; align-items: center; max-width: calc(100vw - 32px); }
 #toast button { background: transparent; color: #fff; flex-shrink: 0; text-decoration: underline; padding: 6px 0; font-size: 12px; }
-#app.auth-screen { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; place-items: center; padding: 24px; }
-#app.auth-screen > main { grid-column: 1; grid-row: 1; max-width: 420px; padding: 28px; border: 1px solid #e5ece8; border-radius: 20px; }
-.auth-card h1 { font-size: 23px; margin-bottom: 12px; }
-.auth-card p { font-size: 13px; margin: 12px 0; }
-.auth-card form { margin-top: 24px; }
-.auth-card input { font-size: 14px; min-height: 44px; }
-.auth-card button { margin-top: 18px; font-size: 13px; }
-.auth-card form button { width: 100%; }
-.entry-profiles { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-top: 24px; }
-.auth-card .entry-profiles button { display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 14px; margin: 0; background: #f5f8f6; min-height: 56px; }
-.entry-profiles .avatar { width: 30px; height: 30px; }
+/* Full-canvas entry, using the workspace's mint and lavender project palette. */
+html:has(#app.auth-screen),body:has(#app.auth-screen){background:#e9efed}
+body:has(#app.auth-screen){padding:0}
+#app.auth-screen{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;max-width:none;min-height:100dvh;margin:0;padding:112px 24px 80px;border:0;border-radius:0;box-shadow:none;overflow:visible;background:radial-gradient(ellipse at 10% 90%,#d3e5df 0,transparent 54%),radial-gradient(ellipse at 94% 5%,#e6dff0 0,transparent 55%),#edf1ef}
+#app.auth-screen>main.entry-card{align-self:center;display:block;grid-column:auto;grid-row:auto;width:100%;max-width:400px;min-height:0;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}
+.entry-brand{position:absolute;top:36px;left:44px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;color:#465254}.entry-brand-divider{margin:0 8px;color:#94a29d}
+.entry-action{width:100%}.entry-action h2{margin:0 0 36px;font-size:28px;line-height:1.4;font-weight:600;letter-spacing:-1px;color:#252e2d}
+.entry-profiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0}.auth-card .entry-profiles button{display:flex;align-items:center;gap:12px;min-height:76px;margin:0;padding:18px 16px;background:#ffffffbd;border:1px solid #ffffff;border-radius:12px;color:#465158;font-size:14px;font-weight:500;text-align:left;box-shadow:0 2px 8px #34454103}.auth-card .entry-profiles button:hover{background:#fff;border-color:#a6bcb3}.entry-profiles .avatar{width:34px;height:34px;font-size:10px}.entry-chevron{margin-left:auto;color:#84938c;font-size:20px;font-weight:400}
+.auth-card #inviteForm{margin:0}.auth-card #inviteForm label{display:block;margin-bottom:10px;font-size:13px;color:#5c6863}.auth-card #inviteLink{box-sizing:border-box;display:block;width:100%;min-height:52px;font-size:13px;padding:14px 16px;border:1px solid #d0dbd5;border-radius:10px;background:#ffffffb3}.auth-card #inviteForm button{width:100%;margin-top:16px;min-height:48px;font-size:14px}
+.auth-card #loginStatus{font-size:12px;color:#984b41;line-height:1.7;margin:16px 0 0}.auth-card #loginStatus:empty{display:none}
+@media(max-width:600px){#app.auth-screen{padding:104px 28px 64px}.entry-brand{top:28px;left:28px;font-size:12px}.entry-action h2{font-size:25px;margin-bottom:28px}.auth-card .entry-profiles button{min-height:72px;padding:14px;gap:9px}.entry-chevron{display:none}}
+@media(max-width:360px){#app.auth-screen{padding-left:20px;padding-right:20px}.entry-brand{left:20px}.auth-card .entry-profiles button{padding:12px;gap:8px;font-size:13px}}
 @media (max-width: 700px) {
   .full-list .task { grid-template-rows: 42px auto; height: 104px !important; min-height: 104px !important; }
 }
@@ -278,3 +279,5 @@ h1, .titlebar h1 { font-size: 26px; }
   .drawer .mobile-settings { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; margin-top: auto; padding: 12px; border-radius: 12px; background: transparent; color: #56636a; }
   .mobile-settings svg { width: 20px; height: 20px; }
 }
+
+#app.auth-screen>main.auth-card:not(.entry-card){width:100%;max-width:480px;box-sizing:border-box;padding:32px;border:1px solid #e7eceb;border-radius:18px;align-self:center}#app.auth-screen>main.auth-card:not(.entry-card) p{font-size:13px;line-height:1.8;overflow-wrap:anywhere}

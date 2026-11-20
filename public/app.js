@@ -238,7 +238,25 @@ function settings() {
 function loginScreen() {
   $('#app').className='auth-screen';
   const validInvite=/^[A-Za-z0-9_-]{40,128}$/.test(client?.invite||'');
-  $('#app').innerHTML=`<main class="auth-card"><h1>졸업전시 작업실</h1><p>${validInvite?'이름을 선택하면 바로 들어갈 수 있어요.':'팀에서 받은 초대 링크로 들어와주세요.'}</p>${validInvite?`<div class="entry-profiles" role="group" aria-label="작업실 참여 이름">${team.map(name=>`<button type="button" data-join="${name}">${avatar(name)}<span>${name}</span></button>`).join('')}</div>`:''}<p id="loginStatus" role="status"></p></main>`;
+  $('#app').innerHTML=`<main class="auth-card entry-card" aria-labelledby="entryTitle">
+    <div class="entry-brand">${icon('menu')}<span>졸업전시 <span class="entry-brand-divider">/</span> Workspace</span></div>
+    <section class="entry-action">
+      <div class="entry-action-content">
+      <h2 id="entryTitle">${validInvite?'이름을 선택해주세요':'작업실 참여하기'}</h2>
+      ${validInvite?`<div class="entry-profiles" role="group" aria-label="작업실 참여 이름">${team.map(name=>`<button type="button" data-join="${name}">${avatar(name)}<span>${name}</span><span class="entry-chevron" aria-hidden="true">›</span></button>`).join('')}</div>`:`<form id="inviteForm"><label for="inviteLink">초대 링크</label><input id="inviteLink" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="초대 링크 붙여넣기" required aria-describedby="loginStatus"><button class="primary" type="submit">작업실 참여하기</button></form>`}
+      <p id="loginStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>`;
+  $('#inviteForm')?.addEventListener('submit',event=>{
+    event.preventDefault();
+    let invite='';
+    try{const url=new URL($('#inviteLink').value.trim());invite=new URLSearchParams(url.hash.slice(1)).get('invite')||''}catch{}
+    if(!/^[A-Za-z0-9_-]{40,128}$/.test(invite)){$('#loginStatus').textContent='초대 링크를 확인해주세요. 받은 링크 전체를 붙여넣어주세요.';return}
+    client.invite=invite;
+    const url=new URL(location.href);url.hash=new URLSearchParams({invite}).toString();history.replaceState(null,'',url);
+    loginScreen();$('#entryTitle').setAttribute('tabindex','-1');$('#entryTitle').focus();
+  });
   document.querySelectorAll('[data-join]').forEach(button=>button.onclick=async()=>{
     if(entering)return;entering=true;document.querySelectorAll('[data-join]').forEach(b=>b.disabled=true);
     try{

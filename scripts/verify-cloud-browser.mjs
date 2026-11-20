@@ -26,7 +26,7 @@ try{
   console.log(JSON.stringify({fourBrowserInviteEntries:true,emailNotRequired:true,reloadPersistence:true,sharedActualRecords:true}));
 }finally{
   for(const page of pages){
-    try{if(await page.locator('#settings').count()){await page.getByRole('button',{name:'작업실 설정',exact:true}).click();await page.getByRole('button',{name:'이 브라우저에서 나가기',exact:true}).click();await page.getByText('팀에서 받은 초대 링크로 들어와주세요.',{exact:true}).waitFor()}}catch{}
+    try{if(await page.locator('#settings').count()){await page.getByRole('button',{name:'작업실 설정',exact:true}).click();await page.getByRole('button',{name:'이 브라우저에서 나가기',exact:true}).click();await page.getByRole('heading',{name:'작업실 참여하기',exact:true}).waitFor()}}catch{}
   }
   await browser.close();server.kill();
 }

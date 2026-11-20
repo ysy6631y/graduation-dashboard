@@ -512,9 +512,14 @@ test('production bundle supports invite-name entry without email and rejects mis
   });
   try{
     await page.goto(url);
-    await page.getByText('팀에서 받은 초대 링크로 들어와주세요.',{exact:true}).waitFor();
+    await page.getByRole('heading',{name:'작업실 참여하기',exact:true}).waitFor();
     assert.equal(signups,0);assert.equal(await page.locator('input[type=email]').count(),0);
-    await page.goto(url+'#invite='+'a'.repeat(43));await page.reload();
+    await page.locator('#inviteLink').fill(url+'#invite=bad');
+    await page.locator('#inviteForm button').click();
+    await page.getByRole('status').filter({hasText:'초대 링크를 확인해주세요.'}).waitFor();
+    assert.equal(signups,0);
+    await page.locator('#inviteLink').fill(url+'#invite='+'a'.repeat(43));
+    await page.locator('#inviteForm button').click();
     await page.getByRole('button',{name:'임다혜',exact:true}).click();
     await page.getByRole('status').filter({hasText:'잘못된 초대 링크'}).waitFor();
     assert.equal(await page.locator('.team-profiles').count(),0);
@@ -524,7 +529,7 @@ test('production bundle supports invite-name entry without email and rejects mis
     await page.reload();await page.locator('.team-profiles').waitFor();
     await page.getByRole('button',{name:'작업실 설정',exact:true}).click();
     await page.getByRole('button',{name:'이 브라우저에서 나가기',exact:true}).click();
-    await page.getByText('팀에서 받은 초대 링크로 들어와주세요.',{exact:true}).waitFor();
+    await page.getByRole('heading',{name:'작업실 참여하기',exact:true}).waitFor();
     assert.equal(joined,false);
   }finally{await page.close();await new Promise(resolve=>staticServer.close(resolve))}
 });
