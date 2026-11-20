@@ -51,15 +51,23 @@ async function add(page, data, selector = '[data-add]') {
   await finish(page);
 }
 
-test('initial loading state shows the animated mascot centered until workspace data arrives',async()=>{
+test('initial loading ring is centered, text-free and respects reduced motion until data arrives',async()=>{
   await reset();const page=await browser.newPage({viewport:{width:1366,height:768}});let release;
   const gate=new Promise(resolve=>{release=resolve});
   await page.route(base+'/api/workspace',async route=>{await gate;await route.continue()});
-  const navigation=page.goto(base);const image=page.locator('.initial-loader img');await image.waitFor();await image.evaluate(element=>element.decode());
-  const box=await image.boundingBox();
-  assert.ok(box.width>=128&&box.width<=168);assert.ok(Math.abs(box.x+box.width/2-683)<3);assert.ok(Math.abs(box.y+box.height/2-384)<3);
-  assert.equal(await image.evaluate(element=>element.naturalWidth),258);
-  release();await navigation;await page.locator('.team-profiles').waitFor();assert.equal(await page.locator('.initial-loader').count(),0);await page.close();
+  try{
+    const navigation=page.goto(base);const ring=page.locator('.loading-ring');await ring.waitFor();
+    const box=await ring.boundingBox();
+    assert.equal(box.width,24);assert.equal(box.height,24);
+    assert.ok(Math.abs(box.x+box.width/2-683)<1);assert.ok(Math.abs(box.y+box.height/2-384)<1);
+    assert.equal(await page.locator('.initial-loader').innerText(),'');
+    assert.equal(await page.locator('.initial-loader img').count(),0);
+    assert.equal(await ring.evaluate(el=>getComputedStyle(el).animationName),'workspace-ring-spin');
+    await page.emulateMedia({reducedMotion:'reduce'});
+    assert.equal(await ring.evaluate(el=>getComputedStyle(el).animationName),'none');
+    release();await navigation;await page.locator('.team-profiles').waitFor();
+    assert.equal(await page.locator('.initial-loader').count(),0);
+  }finally{release();await page.close()}
 });
 
 test('event ranges cover every included day; same-day defaults and reversed dates validate', async () => {

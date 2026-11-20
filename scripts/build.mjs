@@ -1,5 +1,5 @@
 import {build} from 'esbuild';
-import {mkdir, copyFile, writeFile, readFile} from 'node:fs/promises';
+import {mkdir, copyFile, writeFile, readFile, rm} from 'node:fs/promises';
 
 let project={};
 if(!process.argv.includes('--no-project-config')){
@@ -17,7 +17,8 @@ if(anonKey){
   if(!anonKey.startsWith('sb_publishable_')&&role!=='anon')throw Error('Supabase 공개 publishable/anon 키를 확인해주세요.');
 }
 await mkdir('site',{recursive:true});
-for(const file of ['index.html','style.css','reference.css','workspace.css','theme.css','budget.css','usagi-loading.gif'])await copyFile('public/'+file,'site/'+file);
+await rm('site/usagi-loading.gif',{force:true});
+for(const file of ['index.html','style.css','reference.css','workspace.css','theme.css','budget.css'])await copyFile('public/'+file,'site/'+file);
 await build({entryPoints:['public/app.js'],outdir:'site',bundle:true,format:'esm',platform:'browser',target:'es2022',splitting:true,minify:true,chunkNames:'chunks/[name]-[hash]'});
 await writeFile('site/runtime-config.js','window.WORKSPACE_CONFIG=Object.freeze('+JSON.stringify({url,anonKey})+');\n');
 await writeFile('site/.nojekyll','');
